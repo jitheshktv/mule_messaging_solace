@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:spring="http://www.springframework.org/schema/beans" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd">
+    <http:listener-config name="HTTP_Listener_Configuration" host="0.0.0.0" port="8081" doc:name="HTTP Listener Configuration"/>
+    <jms:connector name="SolaceJMS" specification="1.1" username="tibuser" password="tibuser" validateConnections="true" jndiInitialFactory="com.solacesystems.jndi.SolJNDIInitialContextFactory" jndiProviderUrl="smf://192.168.37.128:55555" connectionFactoryJndiName="JNDI/CF/tibco" jndiDestinations="true" forceJndiDestinations="true" doc:name="JMS" durable="true" eagerConsumer="true" persistentDelivery="true">
+        
+        <spring:property name="jndiProviderProperties">
+            <spring:map>
+                <spring:entry key="java.naming.security.principal" value="tibuser"/>
+                <spring:entry key="java.naming.security.credentials" value="tibuser"/>
+                <spring:entry key="Solace_JMS_VPN" value="jk-tibcobw-vpn"/>
+            </spring:map>
+        </spring:property>
+    
+    </jms:connector>
+    <flow name="mule_messaging_solaceFlow">
+        <http:listener config-ref="HTTP_Listener_Configuration" path="/solace" allowedMethods="GET" doc:name="HTTP"/>
+        <set-payload value="Sending a sample message to Solace" doc:name="Set Payload"/>
+        <jms:outbound-endpoint queue="${queue}" connector-ref="SolaceJMS" doc:name="JMS"/>
+    </flow>
+    <flow name="mule_messaging_solaceFlow1">
+        <jms:inbound-endpoint queue="${queue}" connector-ref="SolaceJMS" doc:name="JMS"/>
+        <logger message="message received is : #[payload]" level="INFO" doc:name="Logger"/>
+    </flow>
+</mule>
